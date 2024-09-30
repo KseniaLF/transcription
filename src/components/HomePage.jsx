@@ -1,8 +1,69 @@
+import { useEffect, useRef, useState } from "react";
+
 export default function HomePage(props) {
   const { setFile, setAudioStream } = props;
 
+  const [recordingStatus, setRecordingStatus] = useState("inactive");
+  const [audioChunks, setAudioChunks] = useState([]);
+  const [duration, setDuration] = useState(0);
+
+  const mediaRecorder = useRef(null);
+
+  const mimeType = "audio/webm";
+  async function startRecording() {
+    let tempStream;
+    console.log("startRecording");
+    try {
+      const streamData = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      tempStream = streamData;
+    } catch (error) {
+      console.log(error.message);
+      return;
+    }
+    setRecordingStatus("recording");
+
+    const media = new MediaRecorder(tempStream, { type: mimeType });
+
+    mediaRecorder.current = media;
+    mediaRecorder.current.start();
+
+    let localAudioChuncs = [];
+    mediaRecorder.current.ondataavailible = (e) => {
+      if (typeof e.data.size === "undefined") return;
+      if (e.data.size == 0) return;
+      localAudioChuncs.push(e.data);
+    };
+    setAudioChunks(localAudioChuncs);
+  }
+
+  async function stopRecording() {
+    setRecordingStatus("inactive");
+    console.log("Stopping recording");
+
+    mediaRecorder.current.stop();
+    mediaRecorder.current.onstop = () => {
+      const audioBlob = new Blob(audioChunks, { type: "mimeType" });
+      setAudioStream(audioBlob);
+      setAudioChunks([]);
+      setDuration(0);
+    };
+  }
+
+  useEffect(() => {
+    if (recordingStatus === "inactive") return;
+
+    const interval = setInterval(() => {
+      setDuration((curr) => curr + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  });
+
   return (
-    <main className="flex-1 p-4 flex flex-col gap-3 text-center sm:gap-4 md:gap-5 justify-center pb-20">
+    <main className="flex-1 p-4 flex flex-col gap-3 text-center sm:gap-4 justify-center pb-20">
       <h1 className="text-blue-400 bold font-semibold text-5xl sm:text-6xl md:text-7xl">
         Transcription
       </h1>
@@ -12,9 +73,24 @@ export default function HomePage(props) {
         Transate
       </h3>
 
-      <button className="flex spetialBtn px-4 py-2 rounded-xl items-center text-base justify-between gap-4 mx-auto w-72 max-w-full my-4">
-        <p className=" text-blue-400">Record</p>
-        <i className="fa-solid fa-microphone"></i>
+      <button
+        onClick={
+          recordingStatus == "recording" ? stopRecording : startRecording
+        }
+        className="flex spetialBtn px-4 py-2 rounded-xl items-center text-base justify-between gap-4 mx-auto w-72 max-w-full my-4"
+      >
+        <p className="font-medium text-blue-400">
+          {recordingStatus == "inactive" ? "Record" : "Stop Recording"}
+        </p>
+        <div className="flex items-center gap-2">
+          {duration && <p className="text-sm">{duration}s</p>}
+          <i
+            className={
+              "fa-solid fa-microphone duration-200 " +
+              (recordingStatus == "recording" ? "text-rose-300" : "")
+            }
+          ></i>
+        </div>
       </button>
 
       <p className="text-base">
@@ -33,7 +109,7 @@ export default function HomePage(props) {
         </label>
         a mp3 file
       </p>
-      <p className="italic text-slate-500">Free now free forever</p>
+      <p className="italic text-slate-400">Free now free forever</p>
     </main>
   );
 }
