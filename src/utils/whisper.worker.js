@@ -8,9 +8,11 @@ class MyTranscriptionPipeline {
 
   static async getInstance(progress_callback = null) {
     if (this.instance === null) {
-      this.instance = await pipeline(this.task, null, { progress_callback });
+      this.instance = await pipeline(this.task, null, {
+        progress_callback,
+      });
     }
-
+    console.log("object", this.instance);
     return this.instance;
   }
 }
@@ -23,6 +25,7 @@ self.addEventListener("message", async (event) => {
 });
 
 async function transcribe(audio) {
+  console.log(111);
   sendLoadingMessage("loading");
 
   let pipeline;
@@ -30,6 +33,7 @@ async function transcribe(audio) {
   try {
     pipeline = await MyTranscriptionPipeline.getInstance(load_model_callback);
   } catch (err) {
+    console.log(222);
     console.log(err.message);
   }
 
@@ -83,7 +87,7 @@ class GenerationTracker {
     this.chunks = [];
     this.time_precision =
       pipeline?.processor.feature_extractor.config.chunk_length /
-      pipeline.model.config.max_source_positions;
+      pipeline?.model.config.max_source_positions;
     this.processed_chunks = [];
     this.callbackFunctionCounter = 0;
   }

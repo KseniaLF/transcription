@@ -11,7 +11,7 @@ export default function Transcribing(props) {
         <p>{!downloading ? "warm up cylinders" : "core cylinders engaged"}</p>
       </div>
 
-      <div className="flex flex-col gap-2 sm:gap-4 max-w-[400px] mx-auto w-full">
+      <div className="flex flex-col gap-2 sm:gap-3 max-w-[400px] mx-auto w-full">
         {[1, 2, 3].map((val) => {
           return (
             <div

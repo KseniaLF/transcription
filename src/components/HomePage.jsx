@@ -30,22 +30,26 @@ export default function HomePage(props) {
     mediaRecorder.current = media;
     mediaRecorder.current.start();
 
-    let localAudioChuncs = [];
-    mediaRecorder.current.ondataavailible = (e) => {
-      if (typeof e.data.size === "undefined") return;
-      if (e.data.size == 0) return;
-      localAudioChuncs.push(e.data);
+    let localAudioChunks = [];
+    mediaRecorder.current.ondataavailable = (event) => {
+      if (typeof event.data === "undefined") {
+        return;
+      }
+      if (event.data.size === 0) {
+        return;
+      }
+      localAudioChunks.push(event.data);
     };
-    setAudioChunks(localAudioChuncs);
+    setAudioChunks(localAudioChunks);
   }
 
   async function stopRecording() {
     setRecordingStatus("inactive");
-    console.log("Stopping recording");
+    console.log("Stop recording");
 
     mediaRecorder.current.stop();
     mediaRecorder.current.onstop = () => {
-      const audioBlob = new Blob(audioChunks, { type: "mimeType" });
+      const audioBlob = new Blob(audioChunks, { type: mimeType });
       setAudioStream(audioBlob);
       setAudioChunks([]);
       setDuration(0);

@@ -27,7 +27,9 @@ function App() {
     if (!worker.current) {
       worker.current = new Worker(
         new URL("./utils/whisper.worker.js", import.meta.url),
-        { type: "module" }
+        {
+          type: "module",
+        }
       );
     }
 
@@ -42,21 +44,21 @@ function App() {
           console.log("LOADING");
           break;
         case "RESULT":
-          setDownloading(true);
-          console.log("RESULT");
           setOutput(e.data.results);
+          console.log(e.data.results);
           break;
         case "INFERENCE_DONE":
-          setDownloading(true);
-          console.log("INFERENCE_DONE");
           setFinished(true);
+          console.log("DONE");
           break;
       }
     };
+
     worker.current.addEventListener("message", onMessageReceived);
+
     return () =>
       worker.current.removeEventListener("message", onMessageReceived);
-  }, [downloading]);
+  });
 
   async function readAudioFrom(file) {
     const sampling_rate = 16000;
@@ -66,10 +68,13 @@ function App() {
     const audio = decoded.getChannelData(0);
     return audio;
   }
+
   async function handleFormSubmission() {
     if (!file && !audioStream) return;
+
     let audio = await readAudioFrom(file ? file : audioStream);
-    const model_name = "openai/whisper-tiny.en";
+    const model_name = `openai/whisper-tiny.en`;
+
     worker.current.postMessage({
       type: MessageTypes.INFERENCE_REQUEST,
       audio,
@@ -94,6 +99,7 @@ function App() {
             file={file}
             audioStream={audioStream}
             handleAudioReset={handleAudioReset}
+            handleFormSubmission={handleFormSubmission}
           />
         ) : (
           <HomePage setFile={setFile} setAudioStream={setAudioStream} />
